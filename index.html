@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cassette Player</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            min-height: 100vh;
+            font-family: 'Arial', sans-serif;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .cassette-container {
+            background: linear-gradient(145deg, #2c2c2c, #404040);
+            border: 2px solid #5a5a5a;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            width: 450px;
+            padding: 20px;
+        }
+
+        .cassette-tape {
+            background: linear-gradient(145deg, #3d2914, #5c3e1f);
+            border: 1px solid #2a1a0f;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .tape-label {
+            background: white;
+            color: black;
+            padding: 8px;
+            border-radius: 4px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 12px;
+            margin-bottom: 15px;
+        }
+
+        .cassette-window {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #1a1a1a;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .reels-container {
+            position: relative;
+            height: 80px;
+            margin-bottom: 10px;
+        }
+
+        .cassette-reel {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #1a1a1a 20%, #333 40%, #555 60%, #333 80%);
+            border: 2px solid #444;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            transition: transform 0.1s ease;
+            z-index: 10;
+        }
+
+        .cassette-reel.left-reel {
+            left: 25%;
+        }
+
+        .cassette-reel.right-reel {
+            right: 25%;
+        }
+
+        .cassette-reel::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #222 30%, #444 70%);
+            border: 1px solid #666;
+        }
+
+        .cassette-reel::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px;
+            height: 8px;
+            background: #888;
+            border-radius: 50%;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+            z-index: 2;
+        }
+
+        .cassette-reel.spinning {
+            animation: reelSpin 1.5s linear infinite;
+        }
+
+        .cassette-reel.spinning::before {
+            animation: reelSpinInner 1.2s linear infinite reverse;
+        }
+
+        @keyframes reelSpin {
+            0% { 
+                transform: translateY(-50%) rotate(0deg);
+            }
+            100% { 
+                transform: translateY(-50%) rotate(360deg);
+            }
+        }
+
+        @keyframes reelSpinInner {
+            0% { 
+                transform: translate(-50%, -50%) rotate(0deg);
+            }
+            100% { 
+                transform: translate(-50%, -50%) rotate(360deg);
+            }
+        }
+
+        .tape-strip {
+            background: linear-gradient(90deg, #2a1a0f 0%, #3d2914 50%, #2a1a0f 100%);
+            height: 4px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 2px;
+        }
+
+        .tape-strip.moving::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent 0%, #5c3e1f 50%, transparent 100%);
+            animation: tapeMove 3s linear infinite;
+        }
+
+        @keyframes tapeMove {
+            from { left: -100%; }
+            to { left: 100%; }
+        }
+
+        .track-info {
+            text-align: center;
+            font-size: 13px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 8px;
+            border-radius: 6px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 10px;
+        }
+
+        .artist-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .time-display {
+            color: #ccc;
+        }
+
+        .progress-bar {
+            background: #2c2c2c;
+            border-radius: 4px;
+            height: 6px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #00bfff, #0099cc);
+            height: 100%;
+            width: 0%;
+            transition: width 0.1s ease;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .control-btn {
+            background: linear-gradient(145deg, #404040, #2c2c2c);
+            border: 1px solid #5a5a5a;
+            border-radius: 6px;
+            color: white;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .control-btn:hover {
+            background: linear-gradient(145deg, #4a4a4a, #363636);
+            transform: translateY(-1px);
+        }
+
+        .control-btn:active {
+            transform: translateY(0);
+        }
+
+        .control-btn.active {
+            background: linear-gradient(145deg, #00bfff, #0099cc);
+        }
+
+        .play-btn {
+            width: 50px;
+            height: 50px;
+            font-size: 20px;
+        }
+
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .volume-slider {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: #2c2c2c;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #00bfff;
+            cursor: pointer;
+        }
+
+        .playlist {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .playlist-title {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .playlist-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .playlist-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .playlist-item.active {
+            background: rgba(0, 191, 255, 0.2);
+            border-color: #00bfff;
+        }
+
+        .track-details {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .track-number {
+            color: #999;
+            font-size: 12px;
+            width: 20px;
+        }
+
+        .track-title {
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .track-artist {
+            font-size: 11px;
+            color: #ccc;
+        }
+
+        .track-duration {
+            font-size: 12px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="cassette-container">
+        <!-- Cassette Tape -->
+        <div class="cassette-tape">
+            <div class="tape-label" id="tapeLabel">
+                Synthwave Dreams
+            </div>
+
+            <div class="cassette-window">
+                <div class="reels-container">
+                    <div class="cassette-reel left-reel" id="leftReel"></div>
+                    <div class="cassette-reel right-reel" id="rightReel"></div>
+                </div>
+                
+                <div class="tape-strip" id="tapeStrip"></div>
+            </div>
+
+            <div class="track-info">
+                <div class="artist-name" id="artistName">Retro Vibes</div>
+                <div class="time-display" id="timeDisplay">0:00 / 3:45</div>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-bar" id="progressBar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <!-- Main Controls -->
+        <div class="controls">
+            <button class="control-btn" id="prevBtn">⏮</button>
+            <button class="control-btn play-btn" id="playBtn">▶</button>
+            <button class="control-btn" id="stopBtn">⏹</button>
+            <button class="control-btn" id="nextBtn">⏭</button>
+        </div>
+
+        <!-- Volume Control -->
+        <div class="volume-control">
+            <span>🔊</span>
+            <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="70">
+            <span id="volumeDisplay">70</span>
+        </div>
+
+        <!-- Playlist -->
+        <div class="playlist">
+            <div class="playlist-title">🎵 Playlist</div>
+            <div id="playlistContainer">
+                <!-- Playlist items will be generated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class CassettePlayer {
+            constructor() {
+                this.currentTrack = 0;
+                this.isPlaying = false;
+                this.volume = 0.7;
+                this.currentTime = 0;
+                this.duration = 225; // 3:45 em segundos
+                this.interval = null;
+
+                this.playlist = [
+                    {
+                        title: "Synthwave Dreams",
+                        artist: "Retro Vibes",
+                        duration: "3:45"
+                    },
+                    {
+                        title: "Neon Nights",
+                        artist: "Digital Echo",
+                        duration: "4:12"
+                    },
+                    {
+                        title: "Cassette Memories",
+                        artist: "Vintage Sound",
+                        duration: "3:28"
+                    },
+                    {
+                        title: "80s Groove",
+                        artist: "Time Machine",
+                        duration: "4:01"
+                    },
+                    {
+                        title: "Retro Wave",
+                        artist: "Synth Master",
+                        duration: "3:33"
+                    }
+                ];
+
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+                this.renderPlaylist();
+                this.updateDisplay();
+            }
+
+            bindEvents() {
+                // Play/Pause
+                document.getElementById('playBtn').addEventListener('click', () => this.togglePlay());
+                
+                // Stop
+                document.getElementById('stopBtn').addEventListener('click', () => this.stop());
+                
+                // Previous/Next
+                document.getElementById('prevBtn').addEventListener('click', () => this.previous());
+                document.getElementById('nextBtn').addEventListener('click', () => this.next());
+                
+                // Volume
+                document.getElementById('volumeSlider').addEventListener('input', (e) => this.setVolume(e.target.value));
+                
+                // Progress bar
+                document.getElementById('progressBar').addEventListener('click', (e) => this.seekTo(e));
+            }
+
+            togglePlay() {
+                if (this.isPlaying) {
+                    this.pause();
+                } else {
+                    this.play();
+                }
+            }
+
+            play() {
+                this.isPlaying = true;
+                document.getElementById('playBtn').innerHTML = '⏸';
+                document.getElementById('playBtn').classList.add('active');
+                
+                // Add spinning animation to reels
+                document.getElementById('leftReel').classList.add('spinning');
+                document.getElementById('rightReel').classList.add('spinning');
+                document.getElementById('tapeStrip').classList.add('moving');
+
+                // Start time simulation
+                this.startTimeUpdate();
+            }
+
+            pause() {
+                this.isPlaying = false;
+                document.getElementById('playBtn').innerHTML = '▶';
+                document.getElementById('playBtn').classList.remove('active');
+                
+                // Remove spinning animation from reels
+                document.getElementById('leftReel').classList.remove('spinning');
+                document.getElementById('rightReel').classList.remove('spinning');
+                document.getElementById('tapeStrip').classList.remove('moving');
+
+                // Stop time simulation
+                this.stopTimeUpdate();
+            }
+
+            stop() {
+                this.pause();
+                this.currentTime = 0;
+                this.updateDisplay();
+            }
+
+            previous() {
+                this.currentTrack = this.currentTrack > 0 ? this.currentTrack - 1 : this.playlist.length - 1;
+                this.currentTime = 0;
+                this.updateDisplay();
+                this.updatePlaylist();
+                
+                if (this.isPlaying) {
+                    this.startTimeUpdate();
+                }
+            }
+
+            next() {
+                this.currentTrack = this.currentTrack < this.playlist.length - 1 ? this.currentTrack + 1 : 0;
+                this.currentTime = 0;
+                this.updateDisplay();
+                this.updatePlaylist();
+                
+                if (this.isPlaying) {
+                    this.startTimeUpdate();
+                }
+            }
+
+            setVolume(value) {
+                this.volume = value / 100;
+                document.getElementById('volumeDisplay').textContent = value;
+            }
+
+            seekTo(e) {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const percentage = clickX / rect.width;
+                this.currentTime = Math.floor(this.duration * percentage);
+                this.updateDisplay();
+            }
+
+            selectTrack(index) {
+                this.currentTrack = index;
+                this.currentTime = 0;
+                this.pause();
+                this.updateDisplay();
+                this.updatePlaylist();
+            }
+
+            startTimeUpdate() {
+                this.stopTimeUpdate();
+                this.interval = setInterval(() => {
+                    if (this.currentTime >= this.duration) {
+                        this.next();
+                    } else {
+                        this.currentTime++;
+                        this.updateDisplay();
+                    }
+                }, 1000);
+            }
+
+            stopTimeUpdate() {
+                if (this.interval) {
+                    clearInterval(this.interval);
+                    this.interval = null;
+                }
+            }
+
+            formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                return `${mins}:${secs.toString().padStart(2, '0')}`;
+            }
+
+            updateDisplay() {
+                const track = this.playlist[this.currentTrack];
+                
+                // Update tape label and info
+                document.getElementById('tapeLabel').textContent = track.title;
+                document.getElementById('artistName').textContent = track.artist;
+                document.getElementById('timeDisplay').textContent = 
+                    `${this.formatTime(this.currentTime)} / ${track.duration}`;
+
+                // Update progress bar
+                const percentage = (this.currentTime / this.duration) * 100;
+                document.getElementById('progressFill').style.width = `${percentage}%`;
+            }
+
+            renderPlaylist() {
+                const container = document.getElementById('playlistContainer');
+                container.innerHTML = '';
+
+                this.playlist.forEach((track, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'playlist-item';
+                    if (index === this.currentTrack) {
+                        item.classList.add('active');
+                    }
+
+                    item.innerHTML = `
+                        <div class="track-details">
+                            <div class="track-number">${index + 1}.</div>
+                            <div>
+                                <div class="track-title">${track.title}</div>
+                                <div class="track-artist">${track.artist}</div>
+                            </div>
+                        </div>
+                        <div class="track-duration">${track.duration}</div>
+                    `;
+
+                    item.addEventListener('click', () => this.selectTrack(index));
+                    container.appendChild(item);
+                });
+            }
+
+            updatePlaylist() {
+                const items = document.querySelectorAll('.playlist-item');
+                items.forEach((item, index) => {
+                    if (index === this.currentTrack) {
+                        item.classList.add('active');
+                    } else {
+                        item.classList.remove('active');
+                    }
+                });
+            }
+        }
+
+        // Initialize player when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new CassettePlayer();
+        });
+    </script>
+</body>
+</html>
